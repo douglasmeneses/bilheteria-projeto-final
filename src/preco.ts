@@ -6,3 +6,7 @@ export function valorDoIngresso(precoBase: number): (tipo: TipoIngresso) => numb
     return Math.round(valor * 100) / 100;
   };
 }
+
+export function aplicarTaxa(percentual: number): (valor: number) => number {
+  return (valor) => Math.round(valor * (1 + percentual) * 100) / 100;
+}
