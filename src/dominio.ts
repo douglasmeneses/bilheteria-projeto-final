@@ -51,4 +51,41 @@ export class Evento {
   get disponivel(): number {
     return this.capacidade - this.#vendidas.length;
   }
+
+  reservar(poltronas: number[]): void {
+    if (poltronas.length === 0) {
+      throw new DadosInvalidosErro("lista de poltronas vazia");
+    }
+    if (new Set(poltronas).size !== poltronas.length) {
+      throw new DadosInvalidosErro("poltrona repetida no mesmo pedido");
+    }
+    for (const poltrona of poltronas) {
+      if (!Number.isInteger(poltrona) || poltrona < 1 || poltrona > this.capacidade) {
+        throw new DadosInvalidosErro(`poltrona ${poltrona} inválida`);
+      }
+    }
+    for (const poltrona of poltronas) {
+      if (this.#vendidas.includes(poltrona)) {
+        throw new PoltronaOcupadaErro(`poltrona ${poltrona} já vendida`);
+      }
+    }
+    this.#vendidas.push(...poltronas);
+  }
+
+  liberar(poltronas: number[]): void {
+    if (poltronas.some((poltrona) => !this.#vendidas.includes(poltrona))) {
+      throw new DadosInvalidosErro("poltrona que não estava vendida");
+    }
+    this.#vendidas = this.#vendidas.filter((vendida) => !poltronas.includes(vendida));
+  }
+
+  info(): EventoInfo {
+    return {
+      id: this.id,
+      nome: this.nome,
+      preco: this.preco,
+      capacidade: this.capacidade,
+      disponivel: this.disponivel,
+    };
+  }
 }
