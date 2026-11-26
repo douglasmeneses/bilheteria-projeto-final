@@ -5,6 +5,14 @@ import { direitoAMeia } from "./regras.ts";
 import type { Pagamento } from "./pagamento.ts";
 import type { Comprovante, ConfigBilheteria, EventoInfo, Pedido } from "./tipos.ts";
 
+function comTempoLimite<T>(promessa: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limite = new Promise<never>((_, rejeitar) => {
+    timer = setTimeout(() => rejeitar(new Error("tempo esgotado")), ms);
+  });
+  return Promise.race([promessa, limite]).finally(() => clearTimeout(timer));
+}
+
 export class Bilheteria {
   #eventos: Evento[];
   #pagar: Pagamento;
@@ -37,7 +45,7 @@ export class Bilheteria {
     const total = calcularTotal(ingressos);
 
     try {
-      await this.#pagar(total);
+      await comTempoLimite(this.#pagar(total), this.#limitePagamentoMs);
     } catch (erro) {
       evento.liberar(poltronas);
       throw new PagamentoErro(`pagamento recusado: ${(erro as Error).message}`);
